@@ -1,0 +1,52 @@
+setwd("/home/brad/Documents/Research/2022/Projects/TFome screen/Plasmid plates")
+# setting working directory 
+
+#B = read.table(file = 'blastout2.txt', sep = '\t')
+#B = as.character(B[(B[,3] == 100) & (B[,4] == 0) & (B[,5] == 1) & (B[,6] == 1) & (B[,7] == B[,8]) & (B[,9] == B[,10]),1])
+
+f = dir()
+#list of everything in the directory 
+f = f[grepl('csv',f) & grepl('TF cloning',f)]
+#only files csv 
+f = f[order(sub('TF cloning _ ', '', sub('.csv', '', f)))[length(f)]]
+#subs removing csv and TF cloning 
+# place in alphabetical order 
+#take last one 
+#taking the most current one 
+#Basically just use the one that you download directly after entering all the values from Bens cloning 
+
+A = read.csv(f)
+#read that csv that you downloaded witht the most recent verifications 
+A[!grepl('TG', A[,3]),3] = ''
+A[,12] = gsub(' ', '', A[,12])
+#remove spaces 
+Ready = which((A$Library.Plate == '') & (A$Validated. == 'Y')
+#might change to the Taylor validated 
+#change library plate to TS 
+
+platenames = paste('TS', rep(2:10, each=2), c('1', '2'), sep = '')
+platenames = paste('TS', 1:48, sep="")
+#TS instead 
+
+platenames = platenames[!(platenames %in% A$Library.Plate)]
+#extra text to auto do at the time 
+
+wells = paste(rep(LETTERS[1:16], each = 11), rep(c(paste('0', 2:9, sep = ''), 10:12), 16), sep = '')
+wells = wells[!(wells %in% c('A02','P02','B03','O03','H04','E06','L06','A09','P09','G10','J10','N12'))] # Reserve wells for controls
+
+set.seed(1)
+#reproduciblility from set.seed 
+NumPlates = floor(length(Ready)/length(wells))
+#length(Ready) = passed filters 
+#length(wells) = 164 gives number of plates 
+Ready = sample(Ready, NumPlates*length(wells))
+#renaming ready 
+
+
+A$Library.Plate = as.character(A$Library.Plate)
+A$Library.Plate.Location = as.character(A$Library.Plate.Location)
+A$Library.Plate[Ready] = rep(platenames[1:NumPlates], each = length(wells))
+A$Library.Plate.Location[Ready] = rep(wells, NumPlates)
+
+write.csv(A, file = paste(sub('.csv', '', f), ' _ Locations.csv', sep = ''), row.names = F)
+
